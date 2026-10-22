@@ -15,12 +15,15 @@ Answer with one JSON object and nothing else:
  "open": false}
 Rules:
 - One category per kind of document the instruction names. description says which documents belong to it.
+- Write names and folders in the language of the instruction, with the words it uses. Never translate them.
 - folder is a relative path with "/" between folders, filename is the new name without extension.
 - Use only these placeholders: """ + ", ".join("{" + p + "}" for p in PLACEHOLDERS) + """.
   {year} is like 2026, {month} like 2026-03, {date} like 2026-03-15, {name} is the old file name.
-- Use the folder names and the language of the instruction. "invoices by year" means folder "Invoices/{year}".
-- If no file name is asked for, use "{date}_{sender}_{title}".
-- fallback is where all other documents go. If the instruction does not say, set fallback to null.
+- "by year" means a folder per year, e.g. "<category folder>/{year}".
+- filename is always "{date}_{sender}_{title}", unless the instruction asks for another name.
+  Use {name} only if the instruction says to keep the old file names.
+- fallback is where all other documents go ("the rest", "everything else"). It is not also a category.
+  If the instruction does not say what happens with other documents, set fallback to null.
 - Set open to true only if the instruction allows new categories for the other documents;
   then the fallback folder must contain {category}."""
 
@@ -29,13 +32,16 @@ Answer with one JSON object and nothing else:
 {"category": "...", "date": "YYYY-MM-DD", "sender": "...", "title": "..."}
 Rules:
 - category: CATEGORY_RULE
-- date: the date of the document itself (invoice date, letter date, signing date), not today. Use
-  "YYYY-MM" or "YYYY" if only that is known, null if there is none.
+- date: the date of the document itself (invoice date, letter date, signing date), not today.
+  Always give the full date as YYYY-MM-DD when day, month and year are printed (10.07.2023 is 2023-07-10).
+  Use "YYYY-MM" or "YYYY" only if the day or month is not printed, null if there is no date.
 - sender: the company, office or person who issued the document, short (e.g. "Telekom"), or null.
-- title: a short title of 1 to 4 words, e.g. "Invoice" or "Rental contract", in the language of the document.
+- title: the kind of document in 1 to 3 words, e.g. "Rechnung" or "Rental contract". TITLE_RULE
 - Use only what is in the document and its file name. Never invent values."""
 
 CATEGORY_FIXED = "exactly one of the names in the list, or null if none fits."
+TITLE_FIXED = "Write it in the language of the category names."
+TITLE_OPEN = "Write it in the language of the document."
 CATEGORY_OPEN = ("one of the names in the list if one fits, otherwise a short new category name of 1 or 2 words "
                  "in plural (e.g. \"Invoices\", \"Contracts\"), in the language of the document.")
 
@@ -87,13 +93,19 @@ def json_object(text: str) -> Dict[str, Any]:
 def make_rules(instruction: str, client, settings: Settings) -> Rules:
     data = json_object(_chat(client, settings, RULES_PROMPT, "Instruction:\n" + instruction))
     try:
-        return Rules.from_dict(data)
+        rules = Rules.from_dict(data)
     except ConfigError as exc:
         raise ModelError(f"The model returned unusable rules: {exc}")
+    if rules.fallback:
+        # models sometimes list "the rest" as a category too; the fallback already covers it
+        rest = rules.fallback.name.casefold()
+        rules.categories = [c for c in rules.categories if c.name.casefold() != rest]
+    return rules
 
 
 def classify(text: str, filename: str, rules: Rules, client, settings: Settings) -> Dict[str, Optional[str]]:
     system = FIELDS_PROMPT.replace("CATEGORY_RULE", CATEGORY_OPEN if rules.open else CATEGORY_FIXED)
+    system = system.replace("TITLE_RULE", TITLE_FIXED if rules.categories else TITLE_OPEN)
     categories = [{"name": c.name, "description": c.description} for c in rules.categories]
     user = (
         "Categories:\n" + json.dumps(categories, ensure_ascii=False)

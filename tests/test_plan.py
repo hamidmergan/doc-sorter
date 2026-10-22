@@ -140,3 +140,11 @@ def test_plan_round_trip(inbox, server, tmp_path):
     loaded = Plan.load(tmp_path / "plan.json")
     assert loaded.to_dict() == plan.to_dict()
     assert "Move 3 file(s):" in loaded.preview()
+
+
+def test_rest_listed_as_category_is_dropped(docs, server):
+    rest = {"name": "Other", "description": "everything else", "folder": "Other", "filename": "{date}_{title}"}
+    server.rules = dict(INVOICE_RULES, categories=INVOICE_RULES["categories"] + [rest])
+    docs("note.txt", "Buy milk")
+    plan = _plan(server, docs)
+    assert [c.name for c in plan.rules.categories] == ["Invoices", "Contracts"]

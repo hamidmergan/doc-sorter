@@ -12,6 +12,7 @@ from .errors import ConfigError
 PLACEHOLDERS = ("category", "sender", "title", "year", "month", "date", "name")
 _PLACEHOLDER = re.compile(r"\{([^{}]*)\}")
 _DATE = re.compile(r"^\s*(\d{4})(?:[-./](\d{1,2}))?(?:[-./](\d{1,2}))?")
+_DATE_DMY = re.compile(r"^\s*(\d{1,2})[./](\d{1,2})[./](\d{4})\b")
 _BAD_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f\x7f]')
 _SEPARATORS = re.compile(r"([_-])(?:\s*[_-])+")
 _RESERVED = re.compile(r"^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$", re.I)
@@ -116,7 +117,13 @@ def _category(data: Any, where: str, name: str = "") -> Category:
 
 def parse_date(value: Any) -> Dict[str, str]:
     """year, month (YYYY-MM) and date (YYYY-MM-DD, or less if parts are missing)."""
-    match = _DATE.match(str(value or ""))
+    text = str(value or "")
+    european = _DATE_DMY.match(text)
+    if european:
+        # some models answer with the printed form, e.g. 10.07.2023
+        day, month, year = european.groups()
+        text = f"{year}-{month}-{day}"
+    match = _DATE.match(text)
     if not match:
         return {"year": "", "month": "", "date": ""}
     year, month, day = match.group(1), match.group(2), match.group(3)

@@ -12,7 +12,9 @@ def test_parse_date():
     assert parse_date("2026-3") == {"year": "2026", "month": "2026-03", "date": "2026-03"}
     assert parse_date("2026") == {"year": "2026", "month": "", "date": "2026"}
     assert parse_date(None)["date"] == ""
-    assert parse_date("15.03.2026")["date"] == ""
+    assert parse_date("15.03.2026")["date"] == "2026-03-15"
+    assert parse_date("5/3/2026")["date"] == "2026-03-05"
+    assert parse_date("March 2026")["date"] == ""
     assert parse_date("2026-13-01")["month"] == ""
 
 
