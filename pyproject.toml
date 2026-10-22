@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "doc-sorter"
+version = "0.1.0"
+description = "Sort and rename documents and scans by content with any OpenAI-compatible model, with preview and undo"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Hamid Mergan" }]
+keywords = ["file-organizer", "sort", "rename", "documents", "ocr", "llm", "ollama", "openai"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business",
+    "Topic :: System :: Filesystems",
+    "Typing :: Typed",
+]
+dependencies = [
+    "openai>=1.30",
+    "pypdfium2>=4.30",
+    "python-docx>=1.1",
+    "doc-extract-llm>=0.1.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7", "Pillow>=10.0"]
+dev = ["pytest>=7", "Pillow>=10.0", "build", "twine"]
+
+[project.urls]
+Homepage = "https://github.com/hamidmergan/doc-sorter"
+Source = "https://github.com/hamidmergan/doc-sorter"
+Issues = "https://github.com/hamidmergan/doc-sorter/issues"
+Changelog = "https://github.com/hamidmergan/doc-sorter/blob/main/CHANGELOG.md"
+
+[project.scripts]
+doc-sorter = "doc_sorter.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+doc_sorter = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
