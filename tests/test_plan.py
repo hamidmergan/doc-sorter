@@ -148,3 +148,11 @@ def test_rest_listed_as_category_is_dropped(docs, server):
     docs("note.txt", "Buy milk")
     plan = _plan(server, docs)
     assert [c.name for c in plan.rules.categories] == ["Invoices", "Contracts"]
+
+
+def test_old_names_only_when_asked(docs, server):
+    docs("note.txt", "Buy milk")
+    server.rules = INVOICE_RULES  # its fallback uses {name}
+    assert _plan(server, docs).rules.fallback.filename == "{date}_{sender}_{title}"
+    server.rules = dict(INVOICE_RULES, keep_names=True)
+    assert _plan(server, docs).rules.fallback.filename == "{name}"

@@ -6,22 +6,23 @@ from typing import Any, Dict, Optional
 
 from .config import Settings
 from .errors import ConfigError, ModelError
-from .rules import PLACEHOLDERS, Rules
+from .rules import DEFAULT_FILENAME, PLACEHOLDERS, Rules
 
 RULES_PROMPT = """You turn a sorting instruction for documents into a JSON rule set.
 Answer with one JSON object and nothing else:
 {"categories": [{"name": "...", "description": "...", "folder": "...", "filename": "..."}],
  "fallback": {"name": "...", "folder": "...", "filename": "..."} or null,
- "open": false}
+ "open": false, "language": "...", "keep_names": false}
 Rules:
 - One category per kind of document the instruction names. description says which documents belong to it.
-- Write names and folders in the language of the instruction, with the words it uses. Never translate them.
+- language is the language the instruction is written in, in English (e.g. "English", "German").
+- Write names and folders in that language, with the words the instruction uses. Never translate them.
 - folder is a relative path with "/" between folders, filename is the new name without extension.
 - Use only these placeholders: """ + ", ".join("{" + p + "}" for p in PLACEHOLDERS) + """.
   {year} is like 2026, {month} like 2026-03, {date} like 2026-03-15, {name} is the old file name.
 - "by year" means a folder per year, e.g. "<category folder>/{year}".
 - filename is always "{date}_{sender}_{title}", unless the instruction asks for another name.
-  Use {name} only if the instruction says to keep the old file names.
+  Set keep_names to true only if the instruction says to keep the old file names.
 - fallback is where all other documents go ("the rest", "everything else"). It is not also a category.
   If the instruction does not say what happens with other documents, set fallback to null.
 - Set open to true only if the instruction allows new categories for the other documents;
@@ -36,11 +37,12 @@ Rules:
   Always give the full date as YYYY-MM-DD when day, month and year are printed (10.07.2023 is 2023-07-10).
   Use "YYYY-MM" or "YYYY" only if the day or month is not printed, null if there is no date.
 - sender: the company, office or person who issued the document, short (e.g. "Telekom"), or null.
-- title: the kind of document in 1 to 3 words, e.g. "Rechnung" or "Rental contract". TITLE_RULE
+- title: what the document is, in 1 to 3 words (kind of document, or its subject for notes and letters).
+  TITLE_RULE
 - Use only what is in the document and its file name. Never invent values."""
 
 CATEGORY_FIXED = "exactly one of the names in the list, or null if none fits."
-TITLE_FIXED = "Write it in the language of the category names."
+TITLE_IN = "Write it in {language}, even if the document is in another language."
 TITLE_OPEN = "Write it in the language of the document."
 CATEGORY_OPEN = ("one of the names in the list if one fits, otherwise a short new category name of 1 or 2 words "
                  "in plural (e.g. \"Invoices\", \"Contracts\"), in the language of the document.")
@@ -96,6 +98,11 @@ def make_rules(instruction: str, client, settings: Settings) -> Rules:
         rules = Rules.from_dict(data)
     except ConfigError as exc:
         raise ModelError(f"The model returned unusable rules: {exc}")
+    if data.get("keep_names") is not True:
+        # models like to fall back to the old name; renaming is the point unless the user said otherwise
+        for category in rules.categories + ([rules.fallback] if rules.fallback else []):
+            if "{name}" in category.filename:
+                category.filename = DEFAULT_FILENAME
     if rules.fallback:
         # models sometimes list "the rest" as a category too; the fallback already covers it
         rest = rules.fallback.name.casefold()
@@ -105,7 +112,7 @@ def make_rules(instruction: str, client, settings: Settings) -> Rules:
 
 def classify(text: str, filename: str, rules: Rules, client, settings: Settings) -> Dict[str, Optional[str]]:
     system = FIELDS_PROMPT.replace("CATEGORY_RULE", CATEGORY_OPEN if rules.open else CATEGORY_FIXED)
-    system = system.replace("TITLE_RULE", TITLE_FIXED if rules.categories else TITLE_OPEN)
+    system = system.replace("TITLE_RULE", TITLE_IN.format(language=rules.language) if rules.language else TITLE_OPEN)
     categories = [{"name": c.name, "description": c.description} for c in rules.categories]
     user = (
         "Categories:\n" + json.dumps(categories, ensure_ascii=False)

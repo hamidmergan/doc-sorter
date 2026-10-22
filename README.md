@@ -9,44 +9,44 @@ The model never touches your files. It only returns a few fields per document (c
 A folder with mixed, badly named files:
 
 ```
-doc-sorter-test/
-├── Arbeitsvertrag_final_v3.pdf    PDF with text (employment contract)
-├── Bewerbung_Anschreiben.md       Markdown (job application)
-├── Dokument1.docx                 Word (rental contract)
-├── IMG_2041.jpg                   photo of a receipt
-├── notizen.txt                    text (notes)
-├── order_details.pdf              PDF with text (Amazon invoice, English)
-├── rechnung_03.pdf                PDF with text (Telekom invoice)
-├── scan_0001.pdf                  scanned PDF, no text layer (electricity bill)
-└── song.mp3                       not a document
+inbox/
+├── contract_final_v3.pdf    PDF with text (employment contract)
+├── cover_letter.md          Markdown (job application)
+├── Document1.docx           Word (tenancy agreement)
+├── IMG_2041.jpg             photo of a receipt
+├── invoice_03.pdf           PDF with text (Telekom invoice)
+├── notes.txt                plain text (notes)
+├── order_details.pdf        PDF with text (Amazon invoice)
+├── scan_0001.pdf            scanned PDF, no text layer (electricity statement)
+└── song.mp3                 not a document
 ```
 
 ```bash
-doc-sorter doc-sorter-test "Rechnungen nach Jahr, Verträge extra, Rest in Sonstiges"
+doc-sorter inbox "Invoices by year, contracts separately, the rest in Other"
 ```
 
-The instruction is German, so the folders and titles are German too. Afterwards:
+Afterwards:
 
 ```
-doc-sorter-test/
-├── Rechnungen/
+inbox/
+├── Contracts/
+│   ├── 2023-07-10_Greenfield Properties Ltd_Tenancy Agreement.docx
+│   └── 2024-02-12_Example Software Ltd_Employment Contract.pdf
+├── Invoices/
 │   ├── 2025/
-│   │   └── 2025-11-02_Amazon EU S.a r.l_Rechnung.pdf
+│   │   └── 2025-11-02_Amazon EU S.a r.l_Invoice.pdf
 │   └── 2026/
-│       ├── 2026-01-20_Stadtwerke Lübeck GmbH_Jahresabrechnung.pdf
-│       ├── 2026-03-15_Telekom_Rechnung.pdf
-│       └── 2026-10-17_REWE Markt GmbH_Rechnung.jpg
-├── Verträge/
-│   ├── 2023-07-10_Vonovia SE_Mietvertrag.docx
-│   └── 2024-02-12_Muster Software GmbH_Arbeitsvertrag.pdf
-├── Sonstiges/
-│   ├── 2026-09-05_Max Mustermann_Bewerbung.md
-│   └── Notiz.txt
-├── song.mp3                       left in place
-└── .doc-sorter/                   log for undo
+│       ├── 2026-01-20_City Energy Ltd_Electricity statement.pdf
+│       ├── 2026-03-15_Telekom_Invoice.pdf
+│       └── 2026-10-17_TESCO_Invoice.jpg
+├── Other/
+│   ├── 2026-09-05_Jane Doe_Application Letter.md
+│   └── Notes.txt
+├── song.mp3                 left in place
+└── .doc-sorter/             log for undo
 ```
 
-`doc-sorter --undo doc-sorter-test` puts everything back.
+`doc-sorter --undo inbox` puts everything back. Folder names and titles follow the language of your instruction, so a German instruction gives German folders.
 
 doc-sorter currently supports:
 
@@ -93,14 +93,15 @@ doc-sorter ~/Downloads "Invoices by year, contracts separately, the rest in Othe
 
 ```
 Rules:
-  Invoices: Invoices/{year}/{date}_{sender}_{title}  (invoices and bills)
-  Contracts: Contracts/{date}_{sender}_{title}  (contracts)
+  Invoices: Invoices/{year}/{date}_{sender}_{title}  (All invoice documents)
+  Contracts: Contracts/{date}_{sender}_{title}  (All contract documents)
   Everything else: Other/{date}_{sender}_{title}
 
-Move 3 file(s):
-  notes.txt        ->  Other/Notes.txt
-  rechnung_03.pdf  ->  Invoices/2026/2026-03-15_Telekom_Invoice.pdf
-  scan_0001.pdf    ->  Invoices/2026/2026-01-20_Stadtwerke Lübeck_Electricity bill.pdf
+Move 8 file(s):
+  contract_final_v3.pdf  ->  Contracts/2024-02-12_Example Software Ltd_Employment Contract.pdf
+  invoice_03.pdf         ->  Invoices/2026/2026-03-15_Telekom_Invoice.pdf
+  scan_0001.pdf          ->  Invoices/2026/2026-01-20_City Energy Ltd_Electricity statement.pdf
+  ...
 Skipped (1):
   song.mp3  (unsupported file type)
 ```
@@ -163,11 +164,12 @@ Rules can also be written by hand and passed as `rules=` (a dict, a `Rules` obje
     {"name": "Invoices", "description": "invoices and bills", "folder": "Invoices/{year}", "filename": "{month}_{sender}_{title}"}
   ],
   "fallback": {"name": "Other", "folder": "Other", "filename": "{name}"},
-  "open": false
+  "open": false,
+  "language": "English"
 }
 ```
 
-Placeholders: `{category}`, `{sender}`, `{title}`, `{year}` (2026), `{month}` (2026-03), `{date}` (2026-03-15) and `{name}` (the old file name). With `"fallback": null`, documents that fit no category stay where they are. With `"open": true`, the model may create new categories, and they use the fallback templates.
+Placeholders: `{category}`, `{sender}`, `{title}`, `{year}` (2026), `{month}` (2026-03), `{date}` (2026-03-15) and `{name}` (the old file name). With `"fallback": null`, documents that fit no category stay where they are. With `"open": true`, the model may create new categories, and they use the fallback templates. `language` sets the language of the titles; leave it empty to use the language of each document.
 
 ### Safety
 

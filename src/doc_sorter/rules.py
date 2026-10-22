@@ -17,13 +17,14 @@ _BAD_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f\x7f]')
 _SEPARATORS = re.compile(r"([_-])(?:\s*[_-])+")
 _RESERVED = re.compile(r"^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$", re.I)
 MAX_PART = 100
+DEFAULT_FILENAME = "{date}_{sender}_{title}"
 
 
 @dataclass
 class Category:
     name: str
     folder: str
-    filename: str = "{date}_{sender}_{title}"
+    filename: str = DEFAULT_FILENAME
     description: str = ""
 
     def to_dict(self) -> Dict[str, str]:
@@ -42,12 +43,15 @@ class Rules:
     categories: List[Category] = field(default_factory=list)
     fallback: Optional[Category] = None
     open: bool = False
+    # language of names and titles, e.g. "English"; empty means the language of each document
+    language: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "categories": [c.to_dict() for c in self.categories],
             "fallback": self.fallback.to_dict() if self.fallback else None,
             "open": self.open,
+            "language": self.language,
         }
 
     @classmethod
@@ -63,6 +67,7 @@ class Rules:
             categories=categories,
             fallback=_category(fallback, "fallback", name="Other") if fallback else None,
             open=bool(data.get("open", False)),
+            language=str(data.get("language") or "").strip(),
         )
         if not rules.categories and not rules.fallback:
             raise ConfigError("Rules contain no category and no fallback, so nothing would be sorted.")
@@ -100,7 +105,7 @@ def _category(data: Any, where: str, name: str = "") -> Category:
     category = Category(
         name=str(data.get("name") or name).strip(),
         folder=str(data.get("folder") or "").strip(),
-        filename=str(data.get("filename") or "{date}_{sender}_{title}").strip(),
+        filename=str(data.get("filename") or DEFAULT_FILENAME).strip(),
         description=str(data.get("description") or "").strip(),
     )
     if not category.name:
