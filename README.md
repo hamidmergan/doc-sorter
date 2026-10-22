@@ -1,8 +1,52 @@
 # doc-sorter
 
-A lightweight Python utility that sorts a folder of documents by their content. It reads each file, asks a model of your choice what kind of document it is, and moves it into folders with a clear name, for example `Invoices/2026/2026-03_Telekom_Invoice.pdf`. You can describe how to sort in plain language. Scans and photos are read with a vision model.
+A lightweight Python utility that sorts a folder of documents by their content. It reads each file, asks a model of your choice what kind of document it is, and moves it into folders with a clear name, for example `Invoices/2026/2026-03-15_Telekom_Invoice.pdf`. You can describe how to sort in plain language. Scans and photos are read with a vision model.
 
 The model never touches your files. It only returns a few fields per document (category, date, sender, title). doc-sorter builds the plan from them, shows it to you, and changes nothing until you confirm. Every run is logged and can be undone.
+
+## Example
+
+A folder with mixed, badly named files:
+
+```
+doc-sorter-test/
+├── Arbeitsvertrag_final_v3.pdf    PDF with text (employment contract)
+├── Bewerbung_Anschreiben.md       Markdown (job application)
+├── Dokument1.docx                 Word (rental contract)
+├── IMG_2041.jpg                   photo of a receipt
+├── notizen.txt                    text (notes)
+├── order_details.pdf              PDF with text (Amazon invoice, English)
+├── rechnung_03.pdf                PDF with text (Telekom invoice)
+├── scan_0001.pdf                  scanned PDF, no text layer (electricity bill)
+└── song.mp3                       not a document
+```
+
+```bash
+doc-sorter doc-sorter-test "Rechnungen nach Jahr, Verträge extra, Rest in Sonstiges"
+```
+
+The instruction is German, so the folders and titles are German too. Afterwards:
+
+```
+doc-sorter-test/
+├── Rechnungen/
+│   ├── 2025/
+│   │   └── 2025-11-02_Amazon EU S.a r.l_Rechnung.pdf
+│   └── 2026/
+│       ├── 2026-01-20_Stadtwerke Lübeck GmbH_Jahresabrechnung.pdf
+│       ├── 2026-03-15_Telekom_Rechnung.pdf
+│       └── 2026-10-17_REWE Markt GmbH_Rechnung.jpg
+├── Verträge/
+│   ├── 2023-07-10_Vonovia SE_Mietvertrag.docx
+│   └── 2024-02-12_Muster Software GmbH_Arbeitsvertrag.pdf
+├── Sonstiges/
+│   ├── 2026-09-05_Max Mustermann_Bewerbung.md
+│   └── Notiz.txt
+├── song.mp3                       left in place
+└── .doc-sorter/                   log for undo
+```
+
+`doc-sorter --undo doc-sorter-test` puts everything back.
 
 doc-sorter currently supports:
 
@@ -49,14 +93,14 @@ doc-sorter ~/Downloads "Invoices by year, contracts separately, the rest in Othe
 
 ```
 Rules:
-  Invoices: Invoices/{year}/{month}_{sender}_{title}  (invoices and bills)
+  Invoices: Invoices/{year}/{date}_{sender}_{title}  (invoices and bills)
   Contracts: Contracts/{date}_{sender}_{title}  (contracts)
-  Everything else: Other/{name}
+  Everything else: Other/{date}_{sender}_{title}
 
 Move 3 file(s):
-  notes.md      ->  Other/notes.md
-  scan_001.pdf  ->  Invoices/2026/2026-03_Telekom_Invoice.pdf
-  vertrag.txt   ->  Contracts/2025-01-02_Vonovia_Rental contract.txt
+  notes.txt        ->  Other/Notes.txt
+  rechnung_03.pdf  ->  Invoices/2026/2026-03-15_Telekom_Invoice.pdf
+  scan_0001.pdf    ->  Invoices/2026/2026-01-20_Stadtwerke Lübeck_Electricity bill.pdf
 Skipped (1):
   song.mp3  (unsupported file type)
 ```
