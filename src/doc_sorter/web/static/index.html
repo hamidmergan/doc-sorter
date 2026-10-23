@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>doc-sorter</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <h1>doc-sorter</h1>
+    <span id="model" class="muted"></span>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>1. Folder</h2>
+      <div class="path">
+        <span class="muted">Root:</span> <code id="root"></code>
+        <span class="muted">/</span> <code id="current"></code>
+      </div>
+      <div id="folders" class="chips"></div>
+    </section>
+
+    <section class="card">
+      <h2>2. How to sort</h2>
+      <textarea id="instruction" rows="2"
+        placeholder="e.g. Invoices by year, contracts separately, the rest in Other (leave empty to let the model choose)"></textarea>
+      <div class="options">
+        <label><input type="checkbox" id="recursive"> Include subfolders</label>
+        <label><input type="checkbox" id="copy"> Copy instead of move</label>
+        <label>Target folder <input type="text" id="dest" placeholder="same folder"></label>
+      </div>
+      <button id="preview" class="primary">Preview</button>
+      <div id="progress" class="progress" hidden>
+        <div class="bar"><div id="bar"></div></div>
+        <span id="progress-text" class="muted"></span>
+      </div>
+      <p id="error" class="error" hidden></p>
+    </section>
+
+    <section id="result" class="card" hidden>
+      <h2>3. Check the plan</h2>
+      <div id="rules" class="rules"></div>
+      <div class="columns">
+        <div>
+          <h3>Files</h3>
+          <table>
+            <thead><tr><th><input type="checkbox" id="all" checked></th><th>Now</th><th>After</th></tr></thead>
+            <tbody id="entries"></tbody>
+          </table>
+          <div id="others"></div>
+        </div>
+        <div>
+          <h3>Result</h3>
+          <pre id="tree" class="tree"></pre>
+        </div>
+      </div>
+      <button id="apply" class="primary">Apply</button>
+    </section>
+
+    <section class="card">
+      <h2>Undo</h2>
+      <p class="muted">Puts back the last run whose target is the current folder.</p>
+      <button id="undo">Undo last run</button>
+      <p id="message" hidden></p>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

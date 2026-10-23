@@ -1,9 +1,11 @@
 import argparse
+import os
 import sys
 from pathlib import Path
 from typing import List, Optional
 
 from . import __version__
+from . import config
 from .apply import undo
 from .core import plan as build_plan
 from .errors import SortError
@@ -11,12 +13,72 @@ from .plan import Plan
 from .rules import Rules
 
 
+LOOPBACK = ("127.0.0.1", "localhost", "::1")
+UI_HINT = 'The web page needs extra packages: pip install "doc-sorter[ui]"'
+NO_LOGIN = "Warning: the page has no login. Anyone who can reach this port can sort and move files under the root."
+
+
+def _model_args(p: argparse.ArgumentParser) -> None:
+    p.add_argument("--base-url", help="URL of the OpenAI-compatible server, e.g. http://localhost:11434/v1")
+    p.add_argument("--model", help="Name of the model")
+    p.add_argument("--vision-model", help="Model for scans and images. Default: --model")
+    p.add_argument("--api-key", help="API key, if the server requires one")
+    p.add_argument("--max-files", type=int)
+    p.add_argument("--max-file-mb", type=float)
+    p.add_argument("--max-chars", type=int, help="Characters of text per document sent to the model")
+    p.add_argument("--scan-pages", type=int, help="Pages of a scan that are read")
+    p.add_argument("--timeout", type=float, help="Seconds per request")
+
+
+def _model_options(args: argparse.Namespace) -> dict:
+    keys = ("base_url", "model", "vision_model", "api_key", "max_files", "max_file_mb", "max_chars",
+            "scan_pages", "timeout")
+    return {k: getattr(args, k) for k in keys}
+
+
+def _serve_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(prog="doc-sorter serve", description="Start the local web page.")
+    p.add_argument("--root", help="Only folders below this one can be sorted. "
+                   "Default: DOC_SORTER_ROOT or your home folder")
+    p.add_argument("--host", default="127.0.0.1", help="Default: 127.0.0.1 (this computer only)")
+    p.add_argument("--port", type=int, default=8000)
+    _model_args(p)
+    return p
+
+
+def _serve(argv: List[str]) -> int:
+    args = _serve_parser().parse_args(argv)
+    try:
+        import uvicorn
+
+        from .web.app import create_app
+    except ImportError:
+        _err(UI_HINT)
+        return 2
+    root = args.root or os.environ.get("DOC_SORTER_ROOT") or str(Path.home())
+    try:
+        app = create_app(
+            config.resolve(**_model_options(args)),
+            Path(root),
+            # on loopback, only accept our own host names, so other web pages cannot reach it via DNS rebinding
+            allowed_hosts=list(LOOPBACK) if args.host in LOOPBACK else None,
+        )
+    except SortError as exc:
+        _err(f"Error: {exc}")
+        return 2
+    if args.host not in LOOPBACK:
+        _err(NO_LOGIN)
+    uvicorn.run(app, host=args.host, port=args.port)
+    return 0
+
+
 def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="doc-sorter",
         description="Sort and rename documents by content. Shows a plan first and changes nothing "
         "until you confirm. Every run can be undone.",
-        epilog='Example: doc-sorter ~/Downloads "Invoices by year, contracts separately, the rest in Other"',
+        epilog='Example: doc-sorter ~/Downloads "Invoices by year, contracts separately, the rest in Other". '
+        "Run 'doc-sorter serve' for the web page.",
     )
     p.add_argument("folder", nargs="?", help="Folder with the documents")
     p.add_argument("instruction", nargs="?", help="How to sort, in plain language (optional)")
@@ -30,15 +92,7 @@ def _parser() -> argparse.ArgumentParser:
     p.add_argument("--save-plan", help="Save the plan to this JSON file")
     p.add_argument("--from-plan", help="Apply a saved plan file")
     p.add_argument("--undo", metavar="PATH", help="Undo the last run in this target folder, or a given log file")
-    p.add_argument("--base-url", help="URL of the OpenAI-compatible server, e.g. http://localhost:11434/v1")
-    p.add_argument("--model", help="Name of the model")
-    p.add_argument("--vision-model", help="Model for scans and images. Default: --model")
-    p.add_argument("--api-key", help="API key, if the server requires one")
-    p.add_argument("--max-files", type=int)
-    p.add_argument("--max-file-mb", type=float)
-    p.add_argument("--max-chars", type=int, help="Characters of text per document sent to the model")
-    p.add_argument("--scan-pages", type=int, help="Pages of a scan that are read")
-    p.add_argument("--timeout", type=float, help="Seconds per request")
+    _model_args(p)
     p.add_argument("--version", action="version", version=f"doc-sorter {__version__}")
     return p
 
@@ -89,6 +143,9 @@ def _undo(path: str) -> int:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == "serve":
+        return _serve(argv[1:])
     args = _parser().parse_args(argv)
     try:
         if args.undo:
@@ -114,16 +171,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             rules=args.rules,
             recursive=args.recursive,
             copy=args.copy,
-            base_url=args.base_url,
-            model=args.model,
-            vision_model=args.vision_model,
-            api_key=args.api_key,
-            max_files=args.max_files,
-            max_file_mb=args.max_file_mb,
-            max_chars=args.max_chars,
-            scan_pages=args.scan_pages,
-            timeout=args.timeout,
             progress=progress,
+            **_model_options(args),
         )
         print(_rules_text(result.rules))
         print()

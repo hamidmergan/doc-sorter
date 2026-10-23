@@ -36,8 +36,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=7", "Pillow>=10.0"]
-dev = ["pytest>=7", "Pillow>=10.0", "build", "twine"]
+ui = ["fastapi>=0.100", "uvicorn>=0.23"]
+test = ["pytest>=7", "Pillow>=10.0", "httpx>=0.24", "fastapi>=0.100", "uvicorn>=0.23"]
+dev = ["pytest>=7", "Pillow>=10.0", "httpx>=0.24", "fastapi>=0.100", "uvicorn>=0.23", "build", "twine"]
 
 [project.urls]
 Homepage = "https://github.com/hamidmergan/doc-sorter"
@@ -52,7 +53,7 @@ doc-sorter = "doc_sorter.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-doc_sorter = ["py.typed"]
+doc_sorter = ["py.typed", "web/static/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

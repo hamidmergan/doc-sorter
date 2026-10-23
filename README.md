@@ -137,6 +137,32 @@ More options:
 
 The exit code is 1 if at least one file failed or nothing was applied, 2 for wrong settings.
 
+### Web Page
+
+```bash
+pip install "doc-sorter[ui]"
+doc-sorter serve --base-url http://localhost:11434/v1 --model your-model
+```
+
+Then open http://127.0.0.1:8000. Pick a folder, describe how to sort, and press Preview. You can untick files or edit a target before you apply, and undo the last run with one click.
+
+![The doc-sorter web page with a plan for eight documents](https://raw.githubusercontent.com/hamidmergan/doc-sorter/main/docs/ui.png)
+
+The page can only reach folders below `--root` (default: your home folder). It listens on this computer only. With `--host 0.0.0.0` it is reachable from your network, but it has no login, so do not expose it to the internet.
+
+### Docker
+
+```bash
+docker build -t doc-sorter .
+docker run -p 127.0.0.1:8000:8000 \
+  -v ~/Documents/inbox:/data \
+  -e DOC_SORTER_BASE_URL=http://host.docker.internal:11434/v1 \
+  -e DOC_SORTER_MODEL=your-model \
+  doc-sorter
+```
+
+The container starts the web page on port 8000 and can only see the folder mounted at `/data`. Settings come from the `DOC_SORTER_*` environment variables. `host.docker.internal` reaches a model server such as Ollama on the same computer (on Linux, add `--add-host=host.docker.internal:host-gateway`). On Linux, add `--user $(id -u):$(id -g)` so that new folders belong to you. This also works well on a NAS or home server with a folder where scans arrive.
+
 ### Python API
 
 ```python
@@ -195,6 +221,7 @@ Order: argument, then environment variable, then default.
 | `max_chars` / `--max-chars` | `DOC_SORTER_MAX_CHARS` | 6000 characters per document |
 | `scan_pages` / `--scan-pages` | `DOC_SORTER_SCAN_PAGES` | 3 pages per scan or PDF |
 | `timeout` / `--timeout` | `DOC_SORTER_TIMEOUT` | 120 seconds |
+| `--root` (web page) | `DOC_SORTER_ROOT` | your home folder, `/data` in Docker |
 
 Only the beginning of each document is sent to the model (`max_chars`, `scan_pages`). That is enough to sort it and keeps runs fast.
 

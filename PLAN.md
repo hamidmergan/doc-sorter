@@ -22,3 +22,16 @@ the code builds the plan (mkdir/move), the user confirms, every run is logged fo
 - [x] 5 CLI with preview
 - [x] 6 README, CHANGELOG
 - [x] 7 Tests green, local git commit (no push yet)
+
+## Web UI and Docker
+
+- `doc-sorter serve` starts a local page (FastAPI, one HTML page), optional extra `doc-sorter[ui]`
+- The page only reaches folders under `--root` (default: home folder, in Docker `/data`)
+- Flow: folder + instruction -> preview with progress -> tick files, edit targets -> apply -> undo
+- Host and origin guard like invoice-extract; warning without loopback, no login
+- Dockerfile runs `serve --root /data`, folder mounted with `-v`
+
+- [x] 8 Web API (`web/app.py`) with tests
+- [x] 9 Page (`web/static`)
+- [x] 10 `serve` command
+- [x] 11 Dockerfile, README section, tested with a real container

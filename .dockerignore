@@ -1,0 +1,11 @@
+.git
+tests
+__pycache__
+.DS_Store
+.venv
+.pytest_cache
+dist
+build
+*.egg-info
+PLAN.md
+docs

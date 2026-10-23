@@ -1,0 +1,187 @@
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --text: #1d2129;
+  --muted: #6b7280;
+  --border: #dfe2e7;
+  --hover: #eef0f3;
+  --accent: #2f6fed;
+  --accent-soft: rgba(47, 111, 237, 0.14);
+  --ok: #1f9d55;
+  --error: #d64545;
+  --radius: 8px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171b;
+    --surface: #1e2126;
+    --text: #e6e8eb;
+    --muted: #9aa1ab;
+    --border: #33373e;
+    --hover: #2a2e34;
+    --accent: #5b8cf2;
+    --accent-soft: rgba(91, 140, 242, 0.2);
+    --ok: #3fbf74;
+    --error: #ef6b6b;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+h1 { margin: 0; font-size: 18px; }
+h2 { margin: 0 0 12px; font-size: 15px; }
+h3 { margin: 0 0 8px; font-size: 13px; color: var(--muted); font-weight: 600; }
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.muted { color: var(--muted); }
+.error { color: var(--error); }
+.ok { color: var(--ok); }
+
+code {
+  font: 13px ui-monospace, SFMono-Regular, Menlo, monospace;
+  overflow-wrap: anywhere;
+}
+
+.path { margin-bottom: 8px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.chips button {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+textarea, input[type="text"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  align-items: center;
+  margin: 10px 0 14px;
+}
+
+.options label:last-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 260px;
+  white-space: nowrap;
+}
+
+button {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) { background: var(--hover); }
+button:disabled { opacity: 0.5; cursor: default; }
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+button.primary:hover:not(:disabled) { filter: brightness(1.08); background: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+
+.bar {
+  flex: 0 0 240px;
+  height: 6px;
+  background: var(--hover);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bar div { height: 100%; width: 0; background: var(--accent); transition: width 0.2s; }
+
+.rules {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: var(--accent-soft);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 800px) {
+  .columns { grid-template-columns: minmax(0, 1fr); }
+}
+
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; }
+th, td { padding: 4px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+td:first-child, th:first-child { width: 28px; }
+td.source { width: 34%; overflow-wrap: anywhere; }
+td input[type="text"] { padding: 4px 6px; font-size: 13px; }
+tr.off td.source, tr.off input[type="text"] { opacity: 0.45; }
+
+.tree {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+#others p { margin: 10px 0 4px; font-weight: 600; font-size: 13px; }
+#others ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
