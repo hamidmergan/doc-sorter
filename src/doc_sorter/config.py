@@ -14,6 +14,9 @@ MAX_FILES = 500
 MAX_FILE_MB = 50
 MAX_CHARS = 6000
 SCAN_PAGES = 3
+# web page in upload mode
+MAX_UPLOAD_MB = 200
+MAX_UNPACKED_MB = 1024
 
 # Requests
 TIMEOUT_SECONDS = 120
@@ -36,6 +39,8 @@ class Settings:
     max_file_mb: float
     max_chars: int
     scan_pages: int
+    max_upload_mb: float
+    max_unpacked_mb: float
     timeout: float
     max_retries: int
 
@@ -71,6 +76,8 @@ def resolve(
     max_file_mb: Optional[float] = None,
     max_chars: Optional[int] = None,
     scan_pages: Optional[int] = None,
+    max_upload_mb: Optional[float] = None,
+    max_unpacked_mb: Optional[float] = None,
     timeout: Optional[float] = None,
     max_retries: Optional[int] = None,
 ) -> Settings:
@@ -101,6 +108,8 @@ def resolve(
         max_file_mb=_pick(max_file_mb, "MAX_FILE_MB", MAX_FILE_MB, float),
         max_chars=_pick(max_chars, "MAX_CHARS", MAX_CHARS, int),
         scan_pages=_pick(scan_pages, "SCAN_PAGES", SCAN_PAGES, int),
+        max_upload_mb=_pick(max_upload_mb, "MAX_UPLOAD_MB", MAX_UPLOAD_MB, float),
+        max_unpacked_mb=_pick(max_unpacked_mb, "MAX_UNPACKED_MB", MAX_UNPACKED_MB, float),
         timeout=_pick(timeout, "TIMEOUT", TIMEOUT_SECONDS, float),
         max_retries=_pick(max_retries, "MAX_RETRIES", MAX_RETRIES, int),
     )
@@ -114,6 +123,8 @@ def _validate(s: Settings) -> None:
         "max_file_mb": s.max_file_mb,
         "max_chars": s.max_chars,
         "scan_pages": s.scan_pages,
+        "max_upload_mb": s.max_upload_mb,
+        "max_unpacked_mb": s.max_unpacked_mb,
         "timeout": s.timeout,
     }
     for name, value in positive.items():

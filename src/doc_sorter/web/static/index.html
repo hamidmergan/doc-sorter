@@ -13,7 +13,17 @@
   </header>
 
   <main>
-    <section class="card">
+    <section class="card" data-mode="upload">
+      <h2>1. Files</h2>
+      <label id="drop" class="drop">
+        <input type="file" id="files" multiple hidden>
+        <strong>Drop a ZIP or documents here</strong>
+        <span class="muted">or click to choose. PDF, images, DOCX, TXT, MD. Your files are not changed; you get a sorted ZIP back.</span>
+      </label>
+      <p id="uploaded" class="muted" hidden></p>
+    </section>
+
+    <section class="card" data-mode="folder">
       <h2>1. Folder</h2>
       <div class="path">
         <span class="muted">Root:</span> <code id="root"></code>
@@ -26,7 +36,7 @@
       <h2>2. How to sort</h2>
       <textarea id="instruction" rows="2"
         placeholder="e.g. Invoices by year, contracts separately, the rest in Other (leave empty to let the model choose)"></textarea>
-      <div class="options">
+      <div class="options" data-mode="folder">
         <label><input type="checkbox" id="recursive"> Include subfolders</label>
         <label><input type="checkbox" id="copy"> Copy instead of move</label>
         <label>Target folder <input type="text" id="dest" placeholder="same folder"></label>
@@ -59,7 +69,7 @@
       <button id="apply" class="primary">Apply</button>
     </section>
 
-    <section class="card">
+    <section class="card" data-mode="folder">
       <h2>Undo</h2>
       <p class="muted">Puts back the last run whose target is the current folder.</p>
       <button id="undo">Undo last run</button>

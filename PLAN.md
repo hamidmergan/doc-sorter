@@ -35,3 +35,14 @@ the code builds the plan (mkdir/move), the user confirms, every run is logged fo
 - [x] 9 Page (`web/static`)
 - [x] 10 `serve` command
 - [x] 11 Dockerfile, README section, tested with a real container
+
+## Upload mode (Docker)
+
+- `doc-sorter serve --upload`: drop a ZIP or files, preview, download the sorted ZIP; originals untouched
+- Docker starts in upload mode, no `-v` needed; `serve` without `--upload` keeps the folder mode
+- Limits: upload 200 MB, unpacked 1 GB, 500 files, 50 MB per file (env DOC_SORTER_MAX_UPLOAD_MB, DOC_SORTER_MAX_UNPACKED_MB)
+- ZIP safety: no `..`/absolute paths, no symlinks, size counted while unpacking, temp folder removed
+
+- [x] 12 Config limits, upload/unpack module with tests
+- [x] 13 API: upload, plan, download; page in upload mode
+- [x] 14 Dockerfile, README, real container test

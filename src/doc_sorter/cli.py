@@ -15,7 +15,7 @@ from .rules import Rules
 
 LOOPBACK = ("127.0.0.1", "localhost", "::1")
 UI_HINT = 'The web page needs extra packages: pip install "doc-sorter[ui]"'
-NO_LOGIN = "Warning: the page has no login. Anyone who can reach this port can sort and move files under the root."
+NO_LOGIN = "Warning: the page has no login. Anyone who can reach this port can use it."
 
 
 def _model_args(p: argparse.ArgumentParser) -> None:
@@ -40,6 +40,11 @@ def _serve_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="doc-sorter serve", description="Start the local web page.")
     p.add_argument("--root", help="Only folders below this one can be sorted. "
                    "Default: DOC_SORTER_ROOT or your home folder")
+    p.add_argument("--upload", action="store_true",
+                   help="Upload mode: files or ZIPs come from the browser and go back as a sorted ZIP. "
+                   "No folder on this computer is touched")
+    p.add_argument("--max-upload-mb", type=float, help="Largest upload in upload mode")
+    p.add_argument("--max-unpacked-mb", type=float, help="Largest unpacked size of an upload")
     p.add_argument("--host", default="127.0.0.1", help="Default: 127.0.0.1 (this computer only)")
     p.add_argument("--port", type=int, default=8000)
     _model_args(p)
@@ -58,8 +63,10 @@ def _serve(argv: List[str]) -> int:
     root = args.root or os.environ.get("DOC_SORTER_ROOT") or str(Path.home())
     try:
         app = create_app(
-            config.resolve(**_model_options(args)),
+            config.resolve(**_model_options(args), max_upload_mb=args.max_upload_mb,
+                           max_unpacked_mb=args.max_unpacked_mb),
             Path(root),
+            upload=args.upload,
             # on loopback, only accept our own host names, so other web pages cannot reach it via DNS rebinding
             allowed_hosts=list(LOOPBACK) if args.host in LOOPBACK else None,
         )

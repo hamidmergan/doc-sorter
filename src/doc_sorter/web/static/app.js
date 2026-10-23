@@ -3,6 +3,8 @@
 const $ = (id) => document.getElementById(id);
 let current = "";  // browsed folder, relative to the root
 let plan = null;
+let mode = "folder";  // or "upload": files come from the browser and go back as a ZIP
+let upload = "";  // name of the upload
 
 async function api(path, body) {
   const options = body === undefined ? {} : {
@@ -10,10 +12,36 @@ async function api(path, body) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   };
-  const response = await fetch(path, options);
-  const data = await response.json().catch(() => ({}));
+  return answer(await fetch(path, options));
+}
+
+async function answer(response) {
+  const text = await response.text();
+  let data = {};
+  try {
+    data = JSON.parse(text);
+  } catch (error) {
+    data = { detail: text };
+  }
   if (!response.ok) throw new Error(data.detail || response.statusText);
   return data;
+}
+
+async function sendFiles(files) {
+  if (!files.length) return;
+  show("error", "");
+  $("result").hidden = true;
+  show("uploaded", "Uploading " + files.length + " file(s)...", "muted");
+  const form = new FormData();
+  for (const file of files) form.append("files", file, file.name);
+  try {
+    const data = await answer(await fetch("/api/upload", { method: "POST", body: form }));
+    upload = data.name;
+    show("uploaded", `${data.uploaded} file(s) ready. Now describe how to sort and press Preview.`, "ok");
+  } catch (error) {
+    show("uploaded", "");
+    show("error", error.message);
+  }
 }
 
 function el(tag, text, className) {
@@ -170,10 +198,17 @@ function update() {
     return on;
   });
   const paths = chosen.map((row) => row.querySelector("input[type=text]").value.trim()).filter(Boolean);
-  const top = (plan.dest || plan.folder || "(root)") + "/";
+  let top = (plan.dest || plan.folder || "(root)") + "/";
+  if (mode === "upload") {
+    // the ZIP also holds every file that is not moved, at its old place
+    top = upload + "_sorted.zip";
+    const moved = new Set(chosen.map((row) => Number(row.dataset.index)));
+    for (const e of plan.entries) if (!moved.has(e.index)) paths.push(e.source);
+  }
   $("tree").textContent = paths.length ? top + "\n" + tree(paths) : "Nothing selected.";
   const verb = plan.copy ? "Copy" : "Move";
-  $("apply").textContent = `${verb} ${chosen.length} file(s)`;
+  $("apply").textContent = mode === "upload" ? `Download sorted ZIP (${chosen.length} renamed)`
+    : `${verb} ${chosen.length} file(s)`;
   $("apply").disabled = !chosen.length;
 }
 
@@ -188,6 +223,7 @@ async function apply() {
     if (input.value.trim() !== input.dataset.original) targets[index] = input.value.trim();
   }
   $("apply").disabled = true;
+  if (mode === "upload") return download(selected, targets);
   try {
     const data = await api("/api/apply", { selected, targets });
     $("result").hidden = true;
@@ -195,6 +231,28 @@ async function apply() {
     await browse(data.dest);
   } catch (error) {
     show("error", error.message);
+    $("apply").disabled = false;
+  }
+}
+
+async function download(selected, targets) {
+  try {
+    const response = await fetch("/api/download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ selected, targets }),
+    });
+    if (!response.ok) await answer(response);
+    const link = el("a");
+    link.href = URL.createObjectURL(await response.blob());
+    link.download = upload + "_sorted.zip";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 60000);
+  } catch (error) {
+    show("error", error.message);
+  } finally {
     $("apply").disabled = false;
   }
 }
@@ -213,6 +271,8 @@ async function undo() {
 
 async function start() {
   const info = await api("/api/info");
+  mode = info.mode;
+  document.body.dataset.mode = mode;
   $("root").textContent = info.root;
   $("model").textContent = info.vision_model === info.model
     ? `model: ${info.model}` : `model: ${info.model}, vision: ${info.vision_model}`;
@@ -223,12 +283,27 @@ async function start() {
     for (const row of rows()) row.querySelector("input[type=checkbox]").checked = $("all").checked;
     update();
   };
-  await browse("");
+  if (mode === "upload") {
+    const drop = $("drop");
+    $("files").onchange = () => sendFiles([...$("files").files]);
+    drop.ondragover = (event) => { event.preventDefault(); drop.classList.add("over"); };
+    drop.ondragleave = () => drop.classList.remove("over");
+    drop.ondrop = (event) => {
+      event.preventDefault();
+      drop.classList.remove("over");
+      sendFiles([...event.dataTransfer.files]);
+    };
+    $("drop").querySelector(".muted").textContent += ` Up to ${info.max_upload_mb} MB and ${info.max_files} files.`;
+  } else {
+    await browse("");
+  }
   // after a reload, show a plan that is still waiting or being made
   const job = await api("/api/job");
+  upload = job.upload || "";
+  if (mode === "upload" && job.uploaded) show("uploaded", `${job.uploaded} file(s) ready.`, "ok");
   if (job.state !== "idle") $("instruction").value = job.instruction;
   if (job.state === "done") {
-    await browse(job.plan.folder);
+    if (mode === "folder") await browse(job.plan.folder);
     render(job.plan);
   }
   if (job.state === "running") {

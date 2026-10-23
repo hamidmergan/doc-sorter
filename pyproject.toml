@@ -36,9 +36,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-ui = ["fastapi>=0.100", "uvicorn>=0.23"]
-test = ["pytest>=7", "Pillow>=10.0", "httpx>=0.24", "fastapi>=0.100", "uvicorn>=0.23"]
-dev = ["pytest>=7", "Pillow>=10.0", "httpx>=0.24", "fastapi>=0.100", "uvicorn>=0.23", "build", "twine"]
+ui = ["fastapi>=0.100", "uvicorn>=0.23", "python-multipart>=0.0.6"]
+test = ["pytest>=7", "Pillow>=10.0", "httpx>=0.24", "fastapi>=0.100", "uvicorn>=0.23", "python-multipart>=0.0.6"]
+dev = ["pytest>=7", "Pillow>=10.0", "httpx>=0.24", "fastapi>=0.100", "uvicorn>=0.23", "python-multipart>=0.0.6", "build", "twine"]
 
 [project.urls]
 Homepage = "https://github.com/hamidmergan/doc-sorter"
