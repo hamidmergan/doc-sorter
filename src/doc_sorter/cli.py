@@ -14,7 +14,10 @@ from .rules import Rules
 
 
 LOOPBACK = ("127.0.0.1", "localhost", "::1")
-UI_HINT = 'The web page needs extra packages: pip install "doc-sorter[ui]"'
+UI_HINT = (
+    'The web page needs extra packages: pip install '
+    '"doc-sorter[ui] @ git+https://github.com/hamidmergan/doc-sorter.git"'
+)
 NO_LOGIN = "Warning: the page has no login. Anyone who can reach this port can use it."
 
 

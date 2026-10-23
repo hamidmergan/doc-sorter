@@ -68,11 +68,19 @@ If you run your own model, your documents stay on your own network. Nothing leav
 
 ## Installation
 
+doc-sorter is installed from GitHub:
+
 ```bash
-pip install doc-sorter
+pip install git+https://github.com/hamidmergan/doc-sorter.git
 ```
 
-Alternatively, you can install it from the source:
+With the web page:
+
+```bash
+pip install "doc-sorter[ui] @ git+https://github.com/hamidmergan/doc-sorter.git"
+```
+
+Alternatively, you can install it from a local copy (`pip install ".[ui]"` for the web page):
 
 ```bash
 git clone https://github.com/hamidmergan/doc-sorter.git
@@ -141,7 +149,7 @@ The exit code is 1 if at least one file failed or nothing was applied, 2 for wro
 ### Web Page
 
 ```bash
-pip install "doc-sorter[ui]"
+pip install "doc-sorter[ui] @ git+https://github.com/hamidmergan/doc-sorter.git"
 doc-sorter serve --base-url http://localhost:11434/v1 --model your-model
 ```
 
