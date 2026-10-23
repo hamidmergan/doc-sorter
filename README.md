@@ -46,7 +46,7 @@ inbox/
 └── .doc-sorter/             log for undo
 ```
 
-`doc-sorter --undo inbox` puts everything back. Folder names and titles follow the language of your instruction, so a German instruction gives German folders.
+`doc-sorter --undo inbox` puts everything back. Folder names and titles follow the language of your instruction, so a German instruction gives German folders. Use `--language English` (or any other language) to choose it yourself.
 
 doc-sorter currently supports:
 
@@ -129,6 +129,7 @@ More options:
 | `-r`, `--recursive` | Include subfolders |
 | `--dry-run` | Only show the plan |
 | `-y`, `--yes` | Apply without asking |
+| `--language NAME` | Language of folder names and titles, e.g. `English`. Default: the language of the instruction |
 | `--vision-model NAME` | Model for scans and images, if it differs from `--model` |
 | `--save-rules FILE` | Save the rules made from your instruction |
 | `--rules FILE` | Reuse saved rules (no instruction needed) |
@@ -235,6 +236,7 @@ Order: argument, then environment variable, then default.
 | `max_chars` / `--max-chars` | `DOC_SORTER_MAX_CHARS` | 6000 characters per document |
 | `scan_pages` / `--scan-pages` | `DOC_SORTER_SCAN_PAGES` | 3 pages per scan or PDF |
 | `timeout` / `--timeout` | `DOC_SORTER_TIMEOUT` | 120 seconds |
+| `language` / `--language` | `DOC_SORTER_LANGUAGE` | the language of the instruction |
 | `--root` (web page) | `DOC_SORTER_ROOT` | your home folder |
 | `max_upload_mb` / `--max-upload-mb` (upload mode) | `DOC_SORTER_MAX_UPLOAD_MB` | 200 |
 | `max_unpacked_mb` / `--max-unpacked-mb` (upload mode) | `DOC_SORTER_MAX_UNPACKED_MB` | 1024 |

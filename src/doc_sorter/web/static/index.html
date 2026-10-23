@@ -36,6 +36,16 @@
       <h2>2. How to sort</h2>
       <textarea id="instruction" rows="2"
         placeholder="e.g. Invoices by year, contracts separately, the rest in Other (leave empty to let the model choose)"></textarea>
+      <div class="options">
+        <label class="language">Language
+          <input type="text" id="language" list="languages" placeholder="same as the instruction">
+          <datalist id="languages">
+            <option value="English"><option value="German"><option value="French"><option value="Spanish">
+            <option value="Italian"><option value="Dutch"><option value="Portuguese"><option value="Polish">
+            <option value="Turkish"><option value="Arabic">
+          </datalist>
+        </label>
+      </div>
       <div class="options" data-mode="folder">
         <label><input type="checkbox" id="recursive"> Include subfolders</label>
         <label><input type="checkbox" id="copy"> Copy instead of move</label>

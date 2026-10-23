@@ -36,6 +36,7 @@ class PlanRequest(BaseModel):
     dest: str = ""
     recursive: bool = False
     copy_files: bool = False
+    language: str = ""
 
 
 class ApplyRequest(BaseModel):
@@ -157,6 +158,7 @@ def create_app(settings: Settings, root: Optional[Path] = None, upload: bool = F
     @app.get("/api/info")
     def info():
         return {"mode": "upload" if upload else "folder", "root": "" if upload else str(root),
+                "language": settings.language,
                 "model": settings.model, "vision_model": settings.vision_model,
                 "max_upload_mb": settings.max_upload_mb, "max_files": settings.max_files}
 
@@ -174,6 +176,7 @@ def create_app(settings: Settings, root: Optional[Path] = None, upload: bool = F
                 "folders": [p.name for p in subs]}
 
     def run(source: Path, request: PlanRequest, dest: Path) -> None:
+        language = request.language.strip() or settings.language
         def progress(index: int, total: int, path: Path) -> None:
             with lock:
                 job.done, job.total, job.current = index - 1, total, path.name
@@ -181,7 +184,7 @@ def create_app(settings: Settings, root: Optional[Path] = None, upload: bool = F
         try:
             result = build_plan(source, request.instruction.strip() or None, dest=dest,
                                 recursive=request.recursive, copy=request.copy_files, client=client,
-                                progress=progress, **asdict(settings))
+                                progress=progress, **dict(asdict(settings), language=language))
         except SortError as exc:
             with lock:
                 job.state, job.error = "error", str(exc)

@@ -106,6 +106,8 @@ textarea, input[type="text"] {
   margin: 10px 0 14px;
 }
 
+.options label.language { display: flex; align-items: center; gap: 8px; flex: 0 1 360px; white-space: nowrap; }
+
 .options label:last-child {
   display: flex;
   align-items: center;
@@ -201,4 +203,4 @@ tr.off td.source, tr.off input[type="text"] { opacity: 0.45; }
 
 .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
 #uploaded { margin: 10px 0 0; }
-body[data-mode="upload"] #preview { margin-top: 12px; }
+

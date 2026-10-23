@@ -43,6 +43,8 @@ class Settings:
     max_unpacked_mb: float
     timeout: float
     max_retries: int
+    # language of folder names and titles, e.g. "English"; empty: the language of the instruction
+    language: str = ""
 
 
 def _env(name: str) -> Optional[str]:
@@ -80,6 +82,7 @@ def resolve(
     max_unpacked_mb: Optional[float] = None,
     timeout: Optional[float] = None,
     max_retries: Optional[int] = None,
+    language: Optional[str] = None,
 ) -> Settings:
     base_url = _pick(base_url, "BASE_URL", None, str)
     model = _pick(model, "MODEL", None, str)
@@ -112,6 +115,7 @@ def resolve(
         max_unpacked_mb=_pick(max_unpacked_mb, "MAX_UNPACKED_MB", MAX_UNPACKED_MB, float),
         timeout=_pick(timeout, "TIMEOUT", TIMEOUT_SECONDS, float),
         max_retries=_pick(max_retries, "MAX_RETRIES", MAX_RETRIES, int),
+        language=(_pick(language, "LANGUAGE", "", str) or "").strip(),
     )
     _validate(settings)
     return settings

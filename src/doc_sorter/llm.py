@@ -15,8 +15,7 @@ Answer with one JSON object and nothing else:
  "open": false, "language": "...", "keep_names": false}
 Rules:
 - One category per kind of document the instruction names. description says which documents belong to it.
-- language is the language the instruction is written in, in English (e.g. "English", "German").
-- Write names and folders in that language, with the words the instruction uses. Never translate them.
+- LANGUAGE_RULE
 - folder is a relative path with "/" between folders, filename is the new name without extension.
 - Use only these placeholders: """ + ", ".join("{" + p + "}" for p in PLACEHOLDERS) + """.
   {year} is like 2026, {month} like 2026-03, {date} like 2026-03-15, {name} is the old file name.
@@ -45,7 +44,11 @@ CATEGORY_FIXED = "exactly one of the names in the list, or null if none fits."
 TITLE_IN = "Write it in {language}, even if the document is in another language."
 TITLE_OPEN = "Write it in the language of the document."
 CATEGORY_OPEN = ("one of the names in the list if one fits, otherwise a short new category name of 1 or 2 words "
-                 "in plural (e.g. \"Invoices\", \"Contracts\"), in the language of the document.")
+                 "in plural (e.g. \"Invoices\", \"Contracts\"), CATEGORY_LANGUAGE.")
+LANGUAGE_OWN = ('language is the language the instruction is written in, in English (e.g. "English", "German").\n'
+                "- Write names and folders in that language, with the words the instruction uses. Never translate them.")
+LANGUAGE_SET = ('language is "{language}".\n'
+                "- Write names and folders in {language}. Translate the words of the instruction if needed.")
 
 
 def make_client(settings: Settings):
@@ -93,11 +96,15 @@ def json_object(text: str) -> Dict[str, Any]:
 
 
 def make_rules(instruction: str, client, settings: Settings) -> Rules:
-    data = json_object(_chat(client, settings, RULES_PROMPT, "Instruction:\n" + instruction))
+    language = LANGUAGE_SET.format(language=settings.language) if settings.language else LANGUAGE_OWN
+    system = RULES_PROMPT.replace("LANGUAGE_RULE", language)
+    data = json_object(_chat(client, settings, system, "Instruction:\n" + instruction))
     try:
         rules = Rules.from_dict(data)
     except ConfigError as exc:
         raise ModelError(f"The model returned unusable rules: {exc}")
+    if settings.language:
+        rules.language = settings.language
     if data.get("keep_names") is not True:
         # models like to fall back to the old name; renaming is the point unless the user said otherwise
         for category in rules.categories + ([rules.fallback] if rules.fallback else []):
@@ -112,6 +119,7 @@ def make_rules(instruction: str, client, settings: Settings) -> Rules:
 
 def classify(text: str, filename: str, rules: Rules, client, settings: Settings) -> Dict[str, Optional[str]]:
     system = FIELDS_PROMPT.replace("CATEGORY_RULE", CATEGORY_OPEN if rules.open else CATEGORY_FIXED)
+    system = system.replace("CATEGORY_LANGUAGE", f"in {rules.language}" if rules.language else "in the language of the document")
     system = system.replace("TITLE_RULE", TITLE_IN.format(language=rules.language) if rules.language else TITLE_OPEN)
     categories = [{"name": c.name, "description": c.description} for c in rules.categories]
     user = (

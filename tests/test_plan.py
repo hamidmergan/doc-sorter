@@ -156,3 +156,28 @@ def test_old_names_only_when_asked(docs, server):
     assert _plan(server, docs).rules.fallback.filename == "{date}_{sender}_{title}"
     server.rules = dict(INVOICE_RULES, keep_names=True)
     assert _plan(server, docs).rules.fallback.filename == "{name}"
+
+
+def test_language_setting(docs, server, monkeypatch):
+    server.rules = dict(INVOICE_RULES, language="German")
+    server.fields = {"Telekom": INVOICE}
+    docs("a.pdf", "Invoice Telekom March one, amount 39.99 EUR")
+    plan = _plan(server, docs, language="English")
+    assert plan.rules.language == "English"
+    rules_prompt = server.requests[0]["body"]["messages"][0]["content"]
+    fields_prompt = server.requests[1]["body"]["messages"][0]["content"]
+    assert "Write names and folders in English" in rules_prompt
+    assert "Write it in English" in fields_prompt
+
+    monkeypatch.setenv("DOC_SORTER_LANGUAGE", "French")
+    plan = doc_sorter.plan(docs.root, base_url=server.base_url, model="m")
+    assert plan.rules.language == "French"
+    assert "in French" in server.requests[-1]["body"]["messages"][0]["content"]
+
+
+def test_language_from_instruction_by_default(docs, server):
+    server.rules = dict(INVOICE_RULES, language="German")
+    docs("note.txt", "Buy milk")
+    plan = _plan(server, docs)
+    assert plan.rules.language == "German"
+    assert "Never translate them" in server.requests[0]["body"]["messages"][0]["content"]

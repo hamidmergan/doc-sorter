@@ -100,6 +100,8 @@ def plan(
         rule_set = llm.make_rules(instruction, client, resolved)
     else:
         rule_set = _rules(rules) or default_rules()
+        if resolved.language:
+            rule_set.language = resolved.language
 
     result = Plan(source_root, dest_root, rule_set, copy=copy)
     for index, path in enumerate(files, 1):

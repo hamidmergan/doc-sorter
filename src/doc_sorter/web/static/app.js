@@ -88,6 +88,7 @@ async function preview() {
       dest: $("dest").value,
       recursive: $("recursive").checked,
       copy_files: $("copy").checked,
+      language: $("language").value,
     });
     $("progress").hidden = false;
     await poll();
@@ -274,6 +275,7 @@ async function start() {
   mode = info.mode;
   document.body.dataset.mode = mode;
   $("root").textContent = info.root;
+  $("language").value = info.language;
   $("model").textContent = info.vision_model === info.model
     ? `model: ${info.model}` : `model: ${info.model}, vision: ${info.vision_model}`;
   $("preview").onclick = preview;

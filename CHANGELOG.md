@@ -11,6 +11,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/) and the proje
 
 - Sorting and renaming of PDF, images, DOCX, TXT and MD by content
 - Sorting instruction in plain language, turned into a rule set that can be saved and reused
+- Language setting for folder names and titles (`--language`), by default the language of the instruction
 - Scans and images are read with a vision model through doc-extract
 - Plan with preview, confirmation, dry run, copy mode and a separate target folder
 - Log for every run and undo

@@ -28,11 +28,13 @@ def _model_args(p: argparse.ArgumentParser) -> None:
     p.add_argument("--max-chars", type=int, help="Characters of text per document sent to the model")
     p.add_argument("--scan-pages", type=int, help="Pages of a scan that are read")
     p.add_argument("--timeout", type=float, help="Seconds per request")
+    p.add_argument("--language", help='Language of folder names and titles, e.g. "English". '
+                   "Default: the language of the instruction")
 
 
 def _model_options(args: argparse.Namespace) -> dict:
     keys = ("base_url", "model", "vision_model", "api_key", "max_files", "max_file_mb", "max_chars",
-            "scan_pages", "timeout")
+            "scan_pages", "timeout", "language")
     return {k: getattr(args, k) for k in keys}
 
 
